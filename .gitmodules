@@ -2,11 +2,7 @@
     path = code 
     url = https://git@git.overleaf.com/66eb1c514e9aebd36d6d5466
     ignore = dirty
-[submodule "code"]
-    path = code 
-    url = git://huggingface.co/mingwucn/Cylinder14.git
-    ignore = dirty
 [submodule "LFS"]
-    path = code/lfs 
-    url = git://huggingface.co/mingwucn/Cylinder14.git
+    path = lfs 
+    url = https://huggingface.co/mingwucn/Data-Driven_Approach_to_Mitigate_Acoustic_Sensor_Positioning_Effects_in_LPBF
     ignore = dirty
