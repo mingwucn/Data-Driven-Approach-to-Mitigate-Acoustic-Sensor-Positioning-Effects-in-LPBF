@@ -1,5 +1,5 @@
-[submodule "manuscript"]
-    path = code 
+[submodule "CIRP CMMO 2025 "]
+    path = CIRP CMMO 2025 
     url = https://git@git.overleaf.com/66eb1c514e9aebd36d6d5466
     ignore = dirty
 [submodule "LFS"]
