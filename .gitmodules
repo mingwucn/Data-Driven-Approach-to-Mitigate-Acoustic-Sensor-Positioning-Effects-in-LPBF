@@ -1,0 +1,12 @@
+[submodule "manuscript"]
+    path = code 
+    url = https://git@git.overleaf.com/66eb1c514e9aebd36d6d5466
+    ignore = dirty
+[submodule "code"]
+    path = code 
+    url = git://huggingface.co/mingwucn/Cylinder14.git
+    ignore = dirty
+[submodule "LFS"]
+    path = code/lfs 
+    url = git://huggingface.co/mingwucn/Cylinder14.git
+    ignore = dirty
