@@ -1,0 +1,130 @@
+\documentclass[a4paper,11pt]{article}
+\usepackage{amsmath}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{graphicx}
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+
+\title{Acoustic Signal Map with ROI}
+\author{Ming Wu}
+
+\begin{document}
+\date{\vspace{-5ex}}
+\maketitle
+
+\section{Introduction}
+
+In this document, we describe a procedure to map coordinates from a printed coordinate map (\texttt{lmq\_map}) to a  acoustic signal map (\texttt{daq\_map}) with the RoI. The task involves:
+\begin{itemize}
+    \item Finding neighboring points within a specified circular region of interest (ROI) for each point in the \texttt{lmq\_map}.
+    \item Compressing the information for neighboring points into a compact format.
+    \item Mapping the resulting indices from \texttt{lmq\_map} to \texttt{daq\_map}, considering the resolution difference.
+\end{itemize}
+
+The goal is to return a compressed list of indices and geometrical data for each point in the \texttt{lmq\_map}, with mappings to the corresponding regions in the higher-resolution \texttt{daq\_map}.
+
+\section{Problem Description}
+
+We are given:
+\begin{enumerate}
+    \item A low-resolution map of coordinates, \texttt{lmq\_map}, represented as a list of lines, where each line contains pixel coordinates.
+    \[
+    \texttt{lmq\_map} = \left[
+    \left[(x_1, y_1), (x_1, y_2), \ldots\right], 
+    \left[(x_2, y_1), (x_2, y_2), \ldots\right], 
+    \ldots
+    \right]
+    \]
+    \item The length of each line in the high-resolution map, \texttt{daq\_map}.
+    \[
+    \texttt{daq\_map\_lengths} = [L_1, L_2, L_3, \ldots]
+    \]
+    \item A radius of the region of interest (ROI) that defines the circular neighborhood around each point in \texttt{lmq\_map}.
+\end{enumerate}
+
+\subsection{Steps}
+
+The steps involved are:
+\begin{enumerate}
+    \item For each point in the \texttt{lmq\_map}, find neighboring points within the radius. The result is a list of highlighted points.
+    \item Compress the neighboring points into a more compact format by retaining only the relative distance and direction of the first and last neighboring points.
+    \item Map the corresponding indices from the \texttt{lmq\_map} to the \texttt{daq\_map}, considering the length difference between the two maps.
+\end{enumerate}
+
+\section{Mathematical Formulation}
+
+\subsection{Finding Neighboring Points}
+
+For each point $(x_i, y_i)$ in \texttt{lmq\_map}, the distance to another point $(x_j, y_j)$ is given by:
+\[
+d = \sqrt{(x_j - x_i)^2 + (y_j - y_i)^2}
+\]
+We consider all points within a radius $r$, so the condition for neighboring points is:
+\[
+d \leq r
+\]
+We also calculate the direction (angle) between the two points using:
+\[
+\theta = \text{atan2}(y_j - y_i, x_j - x_i)
+\]
+
+\subsection{Compressing Information}
+
+For each point $(x_i, y_i)$, we find the nearest and farthest neighboring points and record their relative distances and directions:
+\[
+\texttt{relative\_distance\_start}, \texttt{relative\_distance\_end}, \texttt{relative\_direction\_start}, \texttt{relative\_direction\_end}
+\]
+This compression reduces the storage of neighboring points while keeping important geometric information.
+
+\subsection{Mapping to \texttt{daq\_map}}
+
+To map the coordinates from \texttt{lmq\_map} to \texttt{daq\_map}, we scale the indices based on the resolution difference. If the length of line $i$ in \texttt{lmq\_map} is $L_i^{lmq}$ and in \texttt{daq\_map} is $L_i^{daq}$, the scaling is:
+\[
+\texttt{daq\_index} = \frac{\texttt{lmq\_index}}{L_i^{lmq}} \times L_i^{daq}
+\]
+
+\section{Algorithm}
+
+The following algorithm implements the steps described above:
+
+\begin{algorithm}
+\caption{Mapping \texttt{lmq\_map} to \texttt{daq\_map}}
+\begin{algorithmic}[1]
+\State \textbf{Input:} \texttt{lmq\_map}, \texttt{daq\_map\_lengths}, radius $r$
+\State \textbf{Output:} List of compressed neighbor information for each point in \texttt{lmq\_map}
+
+\For{each line in \texttt{lmq\_map}}
+    \For{each point $(x_i, y_i)$ in the line}
+        \State Find neighboring points $(x_j, y_j)$ within the radius $r$
+        \State Calculate the distance and direction for each neighboring point
+        \State Compress the information to retain relative distance and direction of first and last neighbors
+        \State Map the start and end indices to \texttt{daq\_map} using scaling
+    \EndFor
+\EndFor
+
+\State Return the compressed list of neighbor information
+\end{algorithmic}
+\end{algorithm}
+
+\section{Example}
+
+Consider the following \texttt{lmq\_map}:
+\[
+\texttt{lmq\_map} = \left[
+    [(1, 1), (1, 2), (1, 3), (1, 4)],
+    [(2, 1), (2, 2), (2, 3), (2, 4)],
+    [(3, 1), (3, 2), (3, 3), (3, 4)]
+\right]
+\]
+with corresponding \texttt{daq\_map\_lengths}:
+\[
+\texttt{daq\_map\_lengths} = [40, 40, 40]
+\]
+and radius $r = 1.5$. The algorithm identifies neighboring points within the radius, compresses the data, and maps it to the \texttt{daq\_map}.
+
+% \section{Conclusion}
+
+This document provides a structured approach for mapping low-resolution printed coordinates to a higher-resolution acoustic map. The process efficiently compresses and transfers information, allowing for optimized data storage and retrieval.
+
+\end{document}

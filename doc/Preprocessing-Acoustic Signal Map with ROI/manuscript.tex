@@ -1,0 +1,49 @@
+\documentclass[12pt,a4paper]{article}
+% Define margins
+\setlength{\topmargin}{-1.0cm}
+\setlength{\oddsidemargin}{0.1cm}
+\setlength{\textwidth}{16.5cm}
+\setlength{\textheight}{23.0cm}
+
+\input{../myMacros.tex}
+\graphicspath{{./images}}
+% \date{\vspace{-5ex}}
+\date{2023}
+
+% Fill in the information:
+% \newcommand{\ProgramName}{\textcolor{blue}{Mu}lti \textcolor{blue}{S}ensor fusion for \textcolor{blue}{I}n-process \textcolor{blue}{C}ontrol}
+\newcommand{\ProgramName}{\scshape Multi Sensor fusion for In-process Control}
+\newcommand{\ShortProgramName}{SBO-MuSIC}
+\newcommand{\subProgramName}{Acoustic Signal Map with ROI}
+\newcommand{\subTitle}{Documents and Function Guide for Acoustic Signal Map with ROI}
+\newcommand{\AuthorName}{Ming Wu} 
+\newcommand{\AuthorAffiliation}{KU Leuven}
+\newcommand{\UniSupervisorName}{Prof. Peter Karsmakers}  
+\newcommand{\CernSupervisorName}{Prof. Mathias Verbeke} 
+
+
+% Define header and footer
+\usepackage{lastpage}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\includegraphics[height=.65cm]{../KU_Leuven_logo.png}}
+\rhead{\textbf{\ShortProgramName} }
+\lfoot{\textbf{\textit{Page \thepage/\pageref*{LastPage}}}}
+% \rfoot{\textbf{\textit{HR-TA-06/2015-IH}}}
+\renewcommand{\footrulewidth}{0.7pt}
+\renewcommand{\headrulewidth}{0.7pt}
+
+\bibliographystyle{ieeetr}
+\begin{document}
+% \begin{CJK*}{UTF8}{gbsn} % using Chinese
+\input{Title.tex}
+\input{Preprocessing-Acoustic Signal Map with ROI.tex}
+\clearpage
+% \input{main/Appendix.tex}
+\clearpage
+\bibliography{../MuSIC.bib}
+% \clearpage
+% \listoffigures
+% \listoftables
+\end{document}

@@ -1,0 +1,158 @@
+%%% My macros
+\usepackage[author={Ming Wu},icon=Note,color=yellow]{pdfcomment}
+\usepackage{soul}
+\usepackage{graphicx}
+\usepackage{svg}
+\usepackage{textcomp,mathcomp,upgreek,outlines,physics}
+\usepackage[version=4]{mhchem}
+\usepackage{nicefrac,amsmath,mathtools,relsize}
+\usepackage{algorithm,algpseudocode}
+\usepackage{eqparbox,array}
+\usepackage{xcolor}
+% \usepackage[linesnumbered,ruled,vlined]{algorithm2e}
+\usepackage{amssymb}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage[utf8]{inputenc}
+\usepackage{booktabs}
+\usepackage{bookmark}
+\usepackage{hyperref}
+\usepackage{authblk}%author
+% \usepackage{siunitx}
+
+% SVG
+\svgsetup{inkscapeversion=1,inkscapepath=./figures/, inkscape=force, inkscapedpi=300, inkscapearea=page, inkscapeformat=png, inkscapelatex=false }
+
+% PDF comments
+
+
+% subsubsubsection
+\newcommand{\subsubsubsection}[1]{\paragraph{#1}\mbox{}\\}
+\setcounter{secnumdepth}{4}
+\setcounter{tocdepth}{4}
+
+\newcommand{\subsubsubsubsection}[1]{\paragraph{#1}\mbox{}\\}
+\setcounter{secnumdepth}{5}
+\setcounter{tocdepth}{5}
+
+%% style
+\usepackage[left=1cm,right=1cm,top=2cm,bottom=2cm,paperwidth=20cm,paperheight=30cm]{geometry}% Easy control of page dimensions
+% paperwidth=100cm,paperheight=300cm
+\usepackage{changepage}%Alter page layout
+\usepackage[font=small,labelfont=bf]{caption} %make Figure in bold, and make the caption content small.
+
+\hypersetup{
+  colorlinks   = true, %Colours links instead of ugly boxes
+  urlcolor     = blue, %Colour for external hyperlinks
+  linkcolor    = blue, %Colour of internal links
+  citecolor   = black  %Colour of citations
+}
+
+\newcommand{\MW}[1]{\textcolor{blue}{\textbf{(MW: #1)}}}
+\newcommand{\MV}[1]{\textcolor{magenta}{\textbf{(MV: #1)}}}
+\newcommand{\PK}[1]{\textcolor{orange}{\textbf{(PK: #1)}}}
+\newcommand{\SH}[1]{\textcolor{purple}{\textbf{(SH: #1)}}}
+\newcommand{\BV}[1]{\textcolor{violet}{\textbf{(BV: #1)}}}
+
+% \newcommand{\MW}[2]{\pdfmarkupcomment[markup=Highlight,color=yellow]{#1}{#2}}
+
+\providecommand{\keywords}[1]
+{
+  \small	
+  \textbf{\textit{Keywords---}} #1
+}
+
+\newcommand*{\matr}[1]{\mathbfit{#1}}
+\newcommand*{\tran}{^{\mkern-1.5mu\mathsf{T}}}
+\newcommand*{\conj}[1]{\overline{#1}}
+\newcommand*{\hermconj}{^{\mathsf{H}}}
+
+\newcommand*{\Register}{\textsuperscript{\tiny\textregistered}}
+
+\newcommand*{\figref}[2][]{% \figref [<sub caption>][<figure label>]
+  \hyperref[{#2}]{%
+    Fig.~\ref*{#2}%
+    \ifx\\#1\\%
+    \else
+      \,($\mathrm{#1}$)%
+    \fi
+  }%
+}
+\newcommand*{\secref}[1]{% \secref [ref]
+  \hyperref[{#1}]{%
+    Section~\ref*{#1}%
+  }%
+}
+
+\newcommand*{\refcite}[1]{
+  \hyperref[{#1}]{%
+    Ref.~\cite*{#1}%
+  }%
+}
+
+\newcommand*{\apref}[1]{
+  \hyperref[{#1}]{%
+    Appendix~\ref*{#1}%
+  }%
+}
+\newcommand*{\tableref}[1]{%
+  \hyperref[{#1}]{%
+    Table~\ref*{#1}%
+  }%
+}
+\newcommand*{\equationref}[1]{%
+  \hyperref[{#1}]{%
+    Equation~\ref*{#1}%
+  }%
+}
+
+
+\newcommand*{\algoref}[1]{%
+  \hyperref[{#1}]{%
+    Algorithm~\ref*{#1}%
+  }%
+}
+
+\newcommand{\SI}[2]{${#1} \mskip3mu \mathrm{#2}$}
+% \algnewcommand\algorithmicforeach{\textbf{for each}}
+% \algdef{S}[FOR]{ForEach}[1]{\algorithmicforeach\ #1\ \algorithmicdo}
+%%% 
+
+% Algorithms
+% Comments
+\algrenewcommand{\algorithmiccomment}[1]{\hfill// \eqparbox{COMMENT\thealgorithm}{#1}}
+\algnewcommand{\LongComment}[1]{\hfill// \begin{minipage}[t]{\eqboxwidth{COMMENT\thealgorithm}}#1\strut\end{minipage}}
+% Fun and Var
+\definecolor{functionColor}{RGB}{255, 199, 6}
+% \newcommand{\var}[1]{\text{\texttt{#1}}}
+\newcommand{\func}[1]{\textcolor{BlueViolet}{\texttt{#1}}}
+% \newcommand{\func}[1]{\text{\textsl{#1}}}
+% ForEach
+\algnewcommand\algorithmicforeach{\textbf{for each}}
+\algdef{S}[FOR]{ForEach}[1]{\algorithmicforeach\ #1\ \algorithmicdo}
+% Sections
+\newcounter{phase}[algorithm]
+\newlength{\phaserulewidth}
+\newcommand{\setphaserulewidth}{\setlength{\phaserulewidth}}
+\newcommand{\phase}[1]{%
+  \vspace{-1.25ex}
+  % Top phase rule
+  \Statex\leavevmode\llap{\rule{\dimexpr\labelwidth+\labelsep}{\phaserulewidth}}\rule{\linewidth}{\phaserulewidth}
+  \Statex\strut\refstepcounter{phase}\textit{Phase~\thephase~--~#1}% Phase text
+  % Bottom phase rule
+  \vspace{-1.25ex}\Statex\leavevmode\llap{\rule{\dimexpr\labelwidth+\labelsep}{\phaserulewidth}}\rule{\linewidth}{\phaserulewidth}}
+\makeatother
+\setphaserulewidth{.7pt}
+
+
+% % Algorithms2e
+% % \DontPrintSemicolon
+% % Define pseudocode formatting
+% \renewcommand{\KwSty}[1]{\textnormal{\textcolor{blue!90!black}{\ttfamily\bfseries #1}}\unskip}
+% \renewcommand{\ArgSty}[1]{\textnormal{\ttfamily #1}\unskip}
+% \SetKwComment{Comment}{\color{green!50!black}// }{}
+% \renewcommand{\CommentSty}[1]{\textnormal{\ttfamily\color{green!50!black}#1}\unskip}
+% \newcommand{\assign}{\leftarrow}
+% % \newcommand{\var}{\texttt}
+% \newcommand{\FuncCall}[2]{\texttt{\bfseries #1(#2)}}
+% \SetKwProg{Function}{function}{}{}
+% \renewcommand{\ProgSty}[1]{\texttt{\bfseries #1}}
