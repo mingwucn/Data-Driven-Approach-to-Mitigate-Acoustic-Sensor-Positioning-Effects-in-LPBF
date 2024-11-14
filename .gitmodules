@@ -1,8 +1,8 @@
 [submodule "CIRP CMMO 2025 "]
     path = CIRP CMMO 2025 
     url = https://git@git.overleaf.com/66eb1c514e9aebd36d6d5466
-    ignore = dirty
+    ignore = all
 [submodule "LFS"]
     path = lfs 
     url = https://huggingface.co/mingwucn/Data-Driven_Approach_to_Mitigate_Acoustic_Sensor_Positioning_Effects_in_LPBF
-    ignore = dirty
+    ignore = all
