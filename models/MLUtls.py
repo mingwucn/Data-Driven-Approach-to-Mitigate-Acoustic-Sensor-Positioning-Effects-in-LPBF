@@ -741,11 +741,11 @@ def textFinder(text,start,end):
     result = text[start:end]
     return result
 
-def get_current_fold_and_hist(model_name,input_type,output_type,folds,roi_time,roi_radius,max_epochs):
+def get_current_fold_and_hist(model_name,input_type,output_type,folds,roi_radius,max_epochs):
     from MLModels import SVMModel, CNN_Base_1D_Model, ResNet15_1D_Model
     from natsort import natsorted
     import pandas as pd
-    checkpoint_name0 = f'{model_name}_classification_input_{input_type}_output_{output_type}_roi_time{roi_time}_roi_radius{roi_radius}_fold'
+    checkpoint_name0 = f'{model_name}_classification_input_{input_type}_output_{output_type}_roi_radius{roi_radius}_fold'
     # trained_weights =natsorted([i.split(".")[0] for i in os.listdir(os.path.join(os.getcwd(),"lfs","weights")) if i.split(".")[-1]=='pt' and i.split("_")[0]==model_name and i.split("_")[-1]==f'folds{folds}.pt'])
     # trained_weights_hist =natsorted([i for i in os.listdir(os.path.join(os.getcwd(),"lfs","weights","hist")) if i.split(".")[-1]=='csv' and i.split("_")[0]==model_name and i.split("_")[-1]==f'folds{folds}.csv'])
     trained_weights =natsorted([i.split(".")[0] for i in os.listdir(os.path.join(os.getcwd(),"lfs","weights")) if i.split(".")[-1]=='pt' and checkpoint_name0 in i])
@@ -807,6 +807,88 @@ def get_max_length(array_list):
     max_length = max(len(array) for array in array_list)
     return max_length
 
+def get_windowed_data(data, index, window_size=101, fade_length=16):
+    """
+    Gets a window of data around a given index, with zero padding and fade in/out.
+
+    Args:
+    data: A 1D numpy array or torch tensor.
+    index: The index of the data point to center the window around.
+    window_size: The desired size of the window.
+    fade_length: The length of the fade in/out regions.
+
+    Returns:
+    A torch tensor of size (window_size,) containing the windowed data.
+    """
+
+    if not isinstance(data, torch.Tensor):
+        data = torch.tensor(data)
+
+    # Calculate start and end indices
+    start_index = max(0, index - window_size // 2)
+    end_index = min(len(data), start_index + window_size)
+
+    # Calculate padding lengths
+    left_pad = max(0, start_index - index + window_size // 2)
+    right_pad = max(0, window_size - (end_index - start_index))
+
+    # Create windowed data with padding
+    windowed_data = torch.cat([
+    torch.zeros(left_pad),
+    data[start_index:end_index],
+    torch.zeros(right_pad)
+    ])
+
+    # Apply fade in/out
+    fade_in = torch.linspace(0, 1, fade_length)
+    fade_out = torch.linspace(1, 0, fade_length)
+    windowed_data[:fade_length] *= fade_in
+    windowed_data[-fade_length:] *= fade_out
+
+    return windowed_data[:window_size]
+
+def augment_abnormal_data(data,gpu_id,ratio=4):
+    """Augments abnormal data by random cropping and stretching.
+
+    Args:
+        data: The input data tensor.
+        target_length_ratio: The target length ratio for cropping.
+        stretch_compress_ratio: The stretch/compress ratio.
+
+    Returns:
+        A list of augmented data tensors.
+    """
+    
+    target_length_ratio = torch.abs(0.9 + (torch.rand(1) * (0.95 - 0.9)))
+    augmented_data = []
+    stretch_compress_ratio = torch.abs(0.98 + (torch.rand(1) * (1.02 - 0.98)))
+
+    for _ in range(ratio):
+        # Randomly crop the data
+        crop_start = int(torch.rand(1) * (data.shape[1] - data.shape[1] * target_length_ratio))
+        crop_end = crop_start + int(data.shape[1] * target_length_ratio)
+        cropped_data = data[:, crop_start:crop_end]
+
+        # Stretch or compress the data
+        stretched_data = torch.nn.functional.interpolate(cropped_data.unsqueeze(0), size=data.shape[1], mode='linear', align_corners=False).squeeze(0)
+        stretched_data *= stretch_compress_ratio
+        augmented_data.append(stretched_data)
+    return augmented_data
+
+def augment_dataset(label, time_series, meta_list,gpu_id, ratio=4):
+    idx = torch.where(label==1)[0].to('cpu')
+    data = time_series[idx]
+    _m = augment_abnormal_data(data,gpu_id,ratio)
+    augmented_data = torch.vstack([torch.vstack(_m),time_series])
+
+    _aug_meta_list = []
+    if len(meta_list)>0:
+        for _meta in meta_list:
+            _m = torch.vstack(list(_meta[idx])*ratio).squeeze()
+            _aug_meta_list.append(torch.cat([_m,_meta]))
+    _l = torch.cat([torch.vstack(list(label[idx])*ratio).squeeze(),label]) 
+    return augmented_data, _aug_meta_list,_l
+
 class LPBFDataset(Dataset):
     def __init__(
         self,
@@ -852,4 +934,53 @@ class LPBFDataset(Dataset):
             mic,
             ae,
             self.defect_labels[idx]
+        )
+
+class LPBFPointDataset(Dataset):
+    def __init__(
+        self,
+        ids,
+        cube_position,
+        laser_power,
+        scanning_speed,
+        regime_info,
+        print_direction,
+        microphone,
+        ae,
+        window_size,
+        fad_in_out_length = 16
+    ):
+        self.ids = ids
+        self.cube_position = cube_position
+        self.laser_power = laser_power
+        self.scanning_speed = scanning_speed
+        self.regime_info = regime_info
+        self.print_direction = print_direction
+        self.microphone = microphone
+        self.ae = ae
+        self.window_size = window_size
+        self.fad_in_out_length = fad_in_out_length
+
+    def __len__(self):
+        return len(self.ids)
+
+    def __getitem__(self, idx):
+        item_id, _layer_idx, _line_idx, daq_idx, _point_label = self.ids[idx]
+
+        defect_label = _point_label
+        _mic = self.microphone[item_id]
+        _ae = self.ae[item_id]
+
+        mic = get_windowed_data(_mic,daq_idx,window_size = self.window_size, fade_length=self.fad_in_out_length)
+        ae = get_windowed_data(_ae,daq_idx,window_size = self.window_size, fade_length=self.fad_in_out_length)
+
+        return (
+            self.cube_position[item_id],
+            self.laser_power[item_id],
+            self.scanning_speed[item_id],
+            self.regime_info[item_id],
+            self.print_direction[item_id],
+            mic,
+            ae,
+            defect_label
         )

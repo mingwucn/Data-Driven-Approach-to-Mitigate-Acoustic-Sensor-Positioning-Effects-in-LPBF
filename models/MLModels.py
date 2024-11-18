@@ -238,7 +238,7 @@ class SVMModel(nn.Module):
         return torch.tanh(alpha * (x* x) + c)
 
 class CNN_Base_1D_Model(nn.Module):
-    def __init__(self,time_series_length=1920, meta_data_size=4, meta_network_out_ratio = 4, num_classes=3):
+    def __init__(self,time_series_length=1920, meta_data_size=4, meta_network_out_ratio = 4, num_classes=3,dropout=0.2):
         super().__init__()
         self.time_series_length = time_series_length
         self.meta_data_size = meta_data_size
@@ -247,14 +247,16 @@ class CNN_Base_1D_Model(nn.Module):
         # self.conv2 = nn.Conv1d(16, 32, kernel_size=5)
         
         self.conv1 = nn.Conv1d(in_channels=1, out_channels=16, kernel_size=3, padding=1)
-        # self.bn1 = nn.BatchNorm1d(16)
+        self.bn1 = nn.BatchNorm1d(16)
         self.pool1 = nn.MaxPool1d(kernel_size=2, stride=2)
         self.conv2 = nn.Conv1d(in_channels=16, out_channels=32, kernel_size=3, padding=1)
-        # self.bn2 = nn.BatchNorm1d(32)
+        self.bn2 = nn.BatchNorm1d(32)
         self.pool2 = nn.MaxPool1d(kernel_size=2, stride=2)
         self.conv3 = nn.Conv1d(in_channels=32, out_channels=64, kernel_size=3, padding=1)
         self.bn3 = nn.BatchNorm1d(64)
         self.pool3 = nn.MaxPool1d(kernel_size=2, stride=2)
+
+        self.drop = nn.Dropout(dropout)
         
         self.fc1 = nn.Linear(self._get_conv_output_size()+meta_network_out, 64)  
         self.fc2 = nn.Linear(64, 32)  
@@ -274,14 +276,15 @@ class CNN_Base_1D_Model(nn.Module):
         # x = self.pool1(nn.functional.relu(self.bn1(self.conv1(x))))
         # x = self.pool2(nn.functional.relu(self.bn2(self.conv2(x))))
 
-        x = self.pool1(nn.functional.relu(self.conv1(x)))
-        x = self.pool2(nn.functional.relu(self.conv2(x)))
+        x = self.pool1(nn.functional.relu(self.bn1(self.conv1(x))))
+        x = self.pool2(nn.functional.relu(self.bn2(self.conv2(x))))
         x = self.pool3(nn.functional.relu(self.bn3(self.conv3(x))))
         return x
 
     def forward(self, time_series_data, metadata:list = None):
         x = time_series_data.unsqueeze(1)  # Add a channel dimension
         x = self._forward_conv(x)
+        x = self.drop(x)
         x = x.view(x.size(0), -1)  # Flatten for fully connected layers
 
         if self.meta_data_size>0:
@@ -321,7 +324,7 @@ class ResidualBlock1D(nn.Module):
         return out
 
 class ResNet15_1D_Model(nn.Module):
-    def __init__(self, block = ResidualBlock1D, layers=[2, 2, 2, 2], num_classes=2,time_series_length=1920, meta_data_size=4, meta_network_out_ratio=4):
+    def __init__(self, block = ResidualBlock1D, layers=[2, 2, 2, 2], num_classes=2,time_series_length=1920, meta_data_size=4, meta_network_out_ratio=4,dropout=0.2):
         super().__init__()
         self.time_series_length = time_series_length
         self.in_channels = 64
@@ -331,6 +334,7 @@ class ResNet15_1D_Model(nn.Module):
         self.conv1 = nn.Conv1d(in_channels=1, out_channels=64, kernel_size=7, stride=2, padding=3)
         self.bn1 = nn.BatchNorm1d(64)
         self.pool = nn.MaxPool1d(kernel_size=3, stride=2, padding=1)
+        self.drop = nn.Dropout(dropout)
         
         # Residual layers
         self.layer1 = self._make_layer(block, 64, layers[0])
@@ -387,6 +391,7 @@ class ResNet15_1D_Model(nn.Module):
     def forward(self, time_series_data, metadata:list = None):
         x = time_series_data.unsqueeze(1)  # Input shape [batch_size, 1, 1920]
         x = self._forward_conv(x)
+        x = self.drop(x)
         x = torch.flatten(x, 1)
 
         if self.meta_data_size>0:
