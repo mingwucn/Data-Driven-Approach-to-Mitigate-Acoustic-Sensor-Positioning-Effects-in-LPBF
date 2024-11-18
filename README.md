@@ -16,6 +16,8 @@ git clone https://huggingface.co/mingwucn/Data-Driven_Approach_to_Mitigate_Acous
 2. `preprocessing_0_cube_slicer.ipynb`: Segment the cube, as all the cubes were printed in one go. 
 
 ## Statistic difference due to the position and direction
+`statistical_difference.ipynb`
+`statistical_difference.py`
 
 ## CNN
 Regime classification using line-wise labels
