@@ -13,6 +13,8 @@ from tqdm import tqdm
 global device
 global device_ids
 
+
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # if torch.cuda.device_count() > 1:
 #     # os.environ['CUDA_VISIBLE_DEVICES'] = '3'

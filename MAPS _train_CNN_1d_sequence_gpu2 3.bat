@@ -15,7 +15,7 @@ set "ARG4=--gpu=3 --save_every=10 --fold_i=0 --folds=10 --model_name=CNN --batch
 set "TOPICI=!TOPIC!_1_2"
 set "cmd="
 for /l %%i in (1,1,2) do (
-    set "cmd=!cmd! python train_dist_1d.py !ARG%%i! &&"
+    set "cmd=!cmd! torchrun train_dist_1d.py !ARG%%i! &&"
 )
 set "cmd=!cmd:~1,-2!"
 set "GIT=git add . && git commit -am \"!TOPICI! From !server!\" && git push"

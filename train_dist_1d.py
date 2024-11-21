@@ -468,6 +468,10 @@ def main_folds(rank, gpu_ids, model_name, dataset, num_epochs, batch_size, learn
 if __name__ == "__main__":
     import argparse
     import json
+    import os
+
+    os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
+    os.environ['TORCH_USE_CUDA_DSA'] = "1"
 
     num_epochs = 100
     batch_size = int(40*0.5)
