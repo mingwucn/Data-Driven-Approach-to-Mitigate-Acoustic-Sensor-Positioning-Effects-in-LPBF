@@ -19,6 +19,8 @@ git clone https://huggingface.co/mingwucn/Data-Driven_Approach_to_Mitigate_Acous
 `statistical_difference.ipynb`
 `statistical_difference.py`
 
+## Prepare for training a classifier to classify the context
+
 ## CNN
 Regime classification using line-wise labels
 1. Construct line-wise labels via `construct_labels.py` generate a `lpbf_line_wise_data` in the `$DAQDir/intermediate`

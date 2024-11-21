@@ -21,6 +21,7 @@ import multiprocessing
 from multiprocessing import shared_memory, Lock
 import struct
 import zmq
+from scipy.interpolate import griddata
 
 from nptdms import TdmsFile
 
@@ -1326,3 +1327,16 @@ class Sender():
     def __del__(self):
         self.socket.close()
         print(f"Port[{self.port}] closed")
+
+def fill_nan_scipy(arr):
+    x, y = np.meshgrid(np.arange(arr.shape[1]), np.arange(arr.shape[0]))
+    points = np.vstack((x[~np.isnan(arr)].flatten(), y[~np.isnan(arr)].flatten())).T
+    values = arr[~np.isnan(arr)].flatten()
+    arr[np.isnan(arr)] = griddata(points, values, (x[np.isnan(arr)], y[np.isnan(arr)]), method='nearest')
+    return arr
+
+def fill_nan(arr):
+    data = arr.copy()
+    mask = np.isnan(data)
+    data[mask] = np.interp(np.flatnonzero(mask), np.flatnonzero(~mask), data[~mask])
+    return data

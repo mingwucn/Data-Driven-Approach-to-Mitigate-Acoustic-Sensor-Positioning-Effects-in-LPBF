@@ -8,6 +8,7 @@ from torch.utils.data import Dataset, DataLoader
 from torch.utils.data.dataset import Subset
 import torchvision
 import torchvision.transforms
+from scipy.interpolate import griddata
 from tqdm import tqdm
 global device
 global device_ids
@@ -984,3 +985,9 @@ class LPBFPointDataset(Dataset):
             ae,
             defect_label
         )
+
+def fill_nan_scipy(arr):
+    x, y = np.meshgrid(np.arange(arr.shape[1]), np.arange(arr.shape[0]))
+    points = np.vstack((x[~np.isnan(arr)].flatten(), y[~np.isnan(arr)].flatten())).T
+    values = arr[~np.isnan(arr)].flatten()
+    arr[np.isnan(arr)] = griddata(points, values, (x[np.isnan(arr)], y[np.isnan(arr)]), method='nearest')

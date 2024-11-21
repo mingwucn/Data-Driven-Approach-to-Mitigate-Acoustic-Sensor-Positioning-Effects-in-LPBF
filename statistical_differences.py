@@ -59,11 +59,11 @@ for _c,_u in enumerate(uni):
     _ft = fourier_transform1d_interp(_AE,sampling_rate_daq,target_freq=target_freq,target_length=target_length, verbose=False)
     fig,ax = plt.subplots()
     for i in (_ft[0]):
-        ax.plot(common_freqs[10:]/1e6,(i[10:]**2)/1e5,lw=0.01,alpha=0.5, c=cm_std[0])
+        ax.plot(common_freqs[10:]/1e6,(i[10:]**2)/1e6,lw=0.005,alpha=0.5, c=cm_std[0])
     ax.set_ylabel(f"Amplitude")
     ax.set_xlabel(f"Frequency (MHz)")
     # ax.set_ylim(-0.1,2.3)
-    ax.set_ylim(1e-13,np.log(2.3))
+    ax.set_ylim(0.9e-13,np.log(2.5))
     ax.set_yscale('log')
     plt.savefig(f"./outputs/raw_PSD_DirectionDiff_with_{_u}")
     plt.close()

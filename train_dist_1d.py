@@ -21,8 +21,8 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler, StandardScaler,L
 
 sys.path.append("./utls")
 sys.path.append("./models")
-from MLUtls import fade_in_out, standardize_tensor, CylinderDataset,LCVDataset, getKFoldCrossValidationIndexes, train_log, transform_ft, dataset_by_cross_validation, labels_by_classes, get_current_fold_and_hist, LPBFDataset
-from MLModels import SVMModel, CNN_Base_1D_Model, ResNet15_1D_Model
+from models.MLUtls import fade_in_out, standardize_tensor, CylinderDataset,LCVDataset, getKFoldCrossValidationIndexes, train_log, transform_ft, dataset_by_cross_validation, labels_by_classes, get_current_fold_and_hist, LPBFDataset
+from models.MLModels import SVMModel, CNN_Base_1D_Model, ResNet15_1D_Model
 
 def transform_pad(maximum_size,fad_in_out_length=16):
     t = torchvision.transforms.Compose(
@@ -59,12 +59,14 @@ def get_dataset(roi_time=10, roi_radius=3):
         lpbf_data = pickle.load(handle)
 
     sc_power = StandardScaler().fit(np.unique(lpbf_data.laser_power).astype(float).reshape(-1,1))
-    sc_direction = StandardScaler().fit(np.unique(lpbf_data.print_vector[1]).astype(float).reshape(-1,1))
+    # sc_direction = StandardScaler().fit(np.unique(lpbf_data.print_vector[1]).astype(float).reshape(-1,1))
+    le_direction = LabelEncoder().fit(np.unique(np.asarray(np.round(lpbf_data.print_vector[1]),dtype=str)))
     le_speed = LabelEncoder().fit(np.asarray(lpbf_data.scanning_speed,dtype=str))
     le_region = LabelEncoder().fit(np.asarray(lpbf_data.regime_info,dtype=str))
 
     laser_power = sc_power.transform(np.asarray(lpbf_data.laser_power).astype(float).reshape(-1,1)).reshape(-1)
-    print_direction = sc_direction.transform(np.asarray(lpbf_data.print_vector[1]).astype(float).reshape(-1,1)).reshape(-1)
+    # print_direction = sc_direction.transform(np.asarray(lpbf_data.print_vector[1]).astype(float).reshape(-1,1)).reshape(-1)
+    print_direction = le_direction.transform(np.asarray(np.round(lpbf_data.print_vector[1]),dtype=str)).astype(int)
     scanning_speed = le_speed.transform(np.asarray(lpbf_data.scanning_speed).astype(float))
     regime_info = le_region.transform(np.asarray(lpbf_data.regime_info,dtype=str))
 
@@ -221,9 +223,9 @@ class Trainer:
         if self.output_type == 'position':
             labels = _cube_position.to(self.local_rank_gpu)
             criterion = self.criterion_class
-        if self.output_type == 'position':
-            labels = _print_direction.to(self.local_rank_gpu)
-            criterion = self.criterion_reg
+        # if self.output_type == 'position':
+        #     labels = _print_direction.to(self.local_rank_gpu)
+        #     criterion = self.criterion_reg
         if self.output_type == 'laser_power':
             criterion = self.criterion_reg
             labels = _laser_power.to(self.local_rank_gpu)
@@ -236,6 +238,9 @@ class Trainer:
         if self.output_type == 'defect':
             criterion = self.criterion_class
             labels = _defect_labels.to(self.local_rank_gpu)
+        if self.output_type == 'direction':
+            criterion = self.criterion_class
+            labels = _print_direction.to(self.local_rank_gpu)
 
 
         time_series = (transform_ft()(standardize_tensor(_input)).to(self.local_rank_gpu))
