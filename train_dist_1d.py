@@ -488,7 +488,7 @@ if __name__ == "__main__":
     parser.add_argument('--num_workers', type=int, default=4, help=f'Worker number in the dataloader, default:4')
     parser.add_argument('--input_type',  type=str, default='mic+energy', help=f'Input type')
     parser.add_argument('--output_type', type=str, default='regime', help=f'Output type')
-    parser.add_argument('--time_series_length', type=int, default='5880', help=f'The maximum length of time series inputs')
+    parser.add_argument('--time_series_length', type=int, default='5888', help=f'The maximum length of time series inputs')
     
     args = parser.parse_args()
 
