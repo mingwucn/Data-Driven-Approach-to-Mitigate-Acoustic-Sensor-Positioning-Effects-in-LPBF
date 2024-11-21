@@ -236,7 +236,7 @@ class Trainer:
             criterion = self.criterion_class
             labels = _regime_info.to(self.local_rank_gpu)
         if self.output_type == 'defect':
-            criterion = self.criterion_class
+            criterion = self.criterion_binary
             labels = _defect_labels.to(self.local_rank_gpu)
         if self.output_type == 'direction':
             criterion = self.criterion_class
@@ -444,18 +444,25 @@ def main_folds(rank, gpu_ids, model_name, dataset, num_epochs, batch_size, learn
     print(f"Lenght of time series data: {time_series_length}")
     print(f"Lenght of context data: {meta_data_size}")
 
+    if output_type == "regime":
+        num_classes = 4
+    if output_type == "defect":
+        num_classes = 2
+    if output_type == "direction":
+        num_classes = 5
+
     if model_name == "SVM":
         if rank ==0:
             print("Using SVM")
-        model = SVMModel(time_series_length+meta_data_size,num_classes=4).double()
+        model = SVMModel(time_series_length+meta_data_size,num_classes=num_classes).double()
     if model_name == "CNN":
         if rank ==0:
             print("Using CNN")
-        model = CNN_Base_1D_Model(time_series_length=time_series_length, meta_data_size=meta_data_size,num_classes=4).double()
+        model = CNN_Base_1D_Model(time_series_length=time_series_length, meta_data_size=meta_data_size,num_classes=num_classes).double()
     if model_name == "Res15":
         if rank ==0:
             print("Using Res15")
-        model = ResNet15_1D_Model(time_series_length=time_series_length, meta_data_size=meta_data_size,num_classes=4).double()
+        model = ResNet15_1D_Model(time_series_length=time_series_length, meta_data_size=meta_data_size,num_classes=num_classes).double()
 
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
