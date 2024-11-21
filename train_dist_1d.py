@@ -444,11 +444,14 @@ def main_folds(rank, gpu_ids, model_name, dataset, num_epochs, batch_size, learn
     print(f"Lenght of time series data: {time_series_length}")
     print(f"Lenght of context data: {meta_data_size}")
 
+    num_classes = 1
     if output_type == "regime":
         num_classes = 4
     if output_type == "defect":
         num_classes = 2
     if output_type == "direction":
+        num_classes = 5
+    if output_type == "position":
         num_classes = 5
 
     if model_name == "SVM":
