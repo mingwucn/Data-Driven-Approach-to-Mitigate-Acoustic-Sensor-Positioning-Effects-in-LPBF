@@ -4,7 +4,7 @@ setlocal enabledelayedexpansion
 set "TOPIC=CNN_1d_cross_validation_with_differnt_folds_for_context_classification"
 set "WORKDIR=$WORKDIR/MuSIC/Mitigate"
 set "server=barabas"
-set "batch_size=968"
+set "batch_size=964"
 set "epochs=50"
 set "folds=10"
 set "repeat=1"
@@ -22,7 +22,7 @@ set "ARG8=--gpu=3 --save_every=10 --fold_i=0 --folds=!folds! --model_name=CNN --
 set "TOPICI=!TOPIC!_1_4"
 set "cmd="
 for /l %%i in (1,1,2) do (
-    set "cmd=!cmd! torchrun train_dist_1d.py !ARG%%i! &&"
+    set "cmd=!cmd! python train_dist_1d.py !ARG%%i! &&"
 )
 set "cmd=!cmd:~1,-2!"
 set "GIT=git add . && git commit -am \"!TOPICI! From !server!\" && git push"
@@ -38,8 +38,8 @@ ssh !server! "tmux send -t !TOPICI!:0 'clear && cd !WORKDIR! && !cmd! && cd ./lf
 
 set "TOPICI=!TOPIC!_5_8"
 set "cmd="
-for /l %%i in (3,1,4) do (
-    set "cmd=!cmd! torchrun train_dist_1d.py !ARG%%i! &&"
+for /l %%i in (5,1,8) do (
+    set "cmd=!cmd! python train_dist_1d.py !ARG%%i! &&"
 )
 set "cmd=!cmd:~1,-2!"
 set "GIT=git add . && git commit -am \"!TOPICI! From !server!\" && git push"
