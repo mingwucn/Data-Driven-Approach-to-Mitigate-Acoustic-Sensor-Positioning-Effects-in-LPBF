@@ -410,7 +410,7 @@ class Trainer:
             self._save_snapshot(epoch+1)
             print("Finished Training")
 
-def main_folds(rank, gpu_ids, model_name, dataset, num_epochs, batch_size, learning_rate, num_workers, folds, checkpoint_name, save_every, test, input_type, output_type):
+def main_folds(rank, gpu_ids, model_name, dataset, num_epochs, batch_size, learning_rate, num_workers, folds, checkpoint_name, save_every, test, input_type, output_type,time_series_length):
     world_size = len(gpu_ids)
     if world_size >1:
         setup(rank, gpu_ids)
@@ -438,7 +438,7 @@ def main_folds(rank, gpu_ids, model_name, dataset, num_epochs, batch_size, learn
     # ## Test
 
     meta_data_size = len(input_type.split("+"))-1
-    time_series_length = 5880
+    # time_series_length = 5880
     print(f"Input type: {input_type}")
     print(f"Output type: {output_type}")
     print(f"Lenght of time series data: {time_series_length}")
@@ -480,7 +480,7 @@ if __name__ == "__main__":
     parser.add_argument('--fold_i', default="0", type=lambda a: json.loads('['+a.replace(" ",",")+']'), help="fold_i") 
     parser.add_argument('--folds', default="5", type=int, help="folds number") 
     parser.add_argument('--save_every', type=int, default=1, help=f'Save every 1 steps')
-    parser.add_argument('--model_name', type=str, default='SVM', help=f'The model name')
+    parser.add_argument('--model_name', type=str, default='CNN', help=f'The model name')
     parser.add_argument('--roi_time', type=int, default=10, help=f'ROI time, unit(ms)')
     parser.add_argument('--roi_radius', type=float, default=3, help=f'ROI radius, unit(pixel)')
     parser.add_argument('--repeat', type=int, default=1, help=f'Repete Times for Cross valildation, default 1, no repeat')
@@ -488,6 +488,7 @@ if __name__ == "__main__":
     parser.add_argument('--num_workers', type=int, default=4, help=f'Worker number in the dataloader, default:4')
     parser.add_argument('--input_type',  type=str, default='mic+energy', help=f'Input type')
     parser.add_argument('--output_type', type=str, default='regime', help=f'Output type')
+    parser.add_argument('--time_series_length', type=int, default='5880', help=f'The maximum length of time series inputs')
     
     args = parser.parse_args()
 
