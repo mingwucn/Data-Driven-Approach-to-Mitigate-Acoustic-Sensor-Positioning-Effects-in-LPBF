@@ -20,7 +20,8 @@ git clone https://huggingface.co/mingwucn/Data-Driven_Approach_to_Mitigate_Acous
 `statistical_difference.py`
 
 ## Prepare for training a classifier to classify the context
-input: 
+Input: FT of time series
+Output: Direction (Converted to one hot encoder)
 
 ## CNN
 Regime classification using line-wise labels
