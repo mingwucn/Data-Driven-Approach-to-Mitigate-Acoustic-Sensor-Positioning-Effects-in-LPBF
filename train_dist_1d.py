@@ -501,6 +501,7 @@ if __name__ == "__main__":
     print(f"Output type {args.output_type}")
     print(f"ROI time: {args.roi_time}")
     print(f"ROI radius {args.roi_radius}")
+    print(f"Maximum time series length {args.time_series_length}")
     print(f"============= Settings =============\n")
     if int(args.fold_i[0]) == 0:
         folds_i = range(int(args.folds*args.repeat))
@@ -571,11 +572,11 @@ if __name__ == "__main__":
             train_idx, test_idx = all_k_folds[fold_i]
             if len(args.gpu)>1:
                 mp.spawn(main_folds,
-                    args = (args.gpu, args.model_name, dataset, args.epochs, args.batch_size,args.learning_rate,args.num_workers,  (train_idx, test_idx), checkpoint_name, args.save_every,args.test,args.input_type,args.output_type),
+                    args = (args.gpu, args.model_name, dataset, args.epochs, args.batch_size,args.learning_rate,args.num_workers,  (train_idx, test_idx), checkpoint_name, args.save_every,args.test,args.input_type,args.output_type,args.time_series_length),
                     nprocs=len(args.gpu),
                     join=True)
             else:
-                main_folds(0, args.gpu, args.model_name, dataset, args.epochs, args.batch_size,args.learning_rate,args.num_workers,  (train_idx, test_idx), checkpoint_name, args.save_every,args.test,args.input_type,args.output_type)
+                main_folds(0, args.gpu, args.model_name, dataset, args.epochs, args.batch_size,args.learning_rate,args.num_workers,  (train_idx, test_idx), checkpoint_name, args.save_every,args.test,args.input_type,args.output_type,args.time_series_length)
 
             end_time = time.time()
             fold_duration = end_time - start_time 

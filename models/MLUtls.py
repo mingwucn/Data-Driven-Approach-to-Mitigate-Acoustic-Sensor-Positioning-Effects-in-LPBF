@@ -742,7 +742,7 @@ def textFinder(text,start,end):
     result = text[start:end]
     return result
 
-def get_current_fold_and_hist(model_name,input_type,output_type,folds,roi_radius,max_epochs):
+def get_current_fold_and_hist(model_name,input_type,output_type,folds,rou_time, roi_radius,max_epochs):
     from MLModels import SVMModel, CNN_Base_1D_Model, ResNet15_1D_Model
     from natsort import natsorted
     import pandas as pd
