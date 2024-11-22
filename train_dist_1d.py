@@ -438,7 +438,7 @@ def main_folds(rank, gpu_ids, model_name, dataset, num_epochs, batch_size, learn
     # ## Test
 
     meta_data_size = len(input_type.split("+"))-1
-    # time_series_length = 5880
+    # time_series_length = 5888
     print(f"Input type: {input_type}")
     print(f"Output type: {output_type}")
     print(f"Lenght of time series data: {time_series_length}")

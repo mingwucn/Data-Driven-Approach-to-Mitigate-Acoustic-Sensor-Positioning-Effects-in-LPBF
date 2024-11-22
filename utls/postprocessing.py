@@ -5,12 +5,17 @@ import subprocess
 from natsort import natsorted
 import itertools
 import pandas as pd
+import pickle
 sys.path.append("../utls")
 sys.path.append("../utls")
 sys.path.append("../.")
 import os
 from preprocessing import *
 from InterfaceDeclaration import LPBFInterface
+from torch.utils.data.dataset import Subset
+from torch.utils.data import Dataset, DataLoader, DistributedSampler
+from sklearn.preprocessing import StandardScaler, MinMaxScaler, StandardScaler,LabelEncoder
+from models.MLUtls import LPBFDataset
 
 def generate_hist_name(model_name, acoustic_type, context_type,output_type):
     context_combinations = []
@@ -85,6 +90,7 @@ def generate_hist_df(hist_dir,model_name, acoustic_type, context_type,output_typ
                         inputs_list.append(inputs)
                         outputs_list.append(_output)
                         model_list.append(model)
+
     df = pd.DataFrame()
     df['Model'] = model_list
     df['Train Acc'] = train_acc_list
@@ -99,3 +105,33 @@ def generate_hist_df(hist_dir,model_name, acoustic_type, context_type,output_typ
     new_df.index = range(len(new_df))
     return new_df
 
+def get_dataset(roi_time=10, roi_radius=3):
+    project_name = ["MuSIC", "MaPS", "MuSIC_EXP1"]
+    if os.name == "posix":
+        data_dir = subprocess.getoutput("echo $DATADIR")
+    elif os.name == "nt":
+        data_dir = subprocess.getoutput("echo %datadir%")
+    music_dir = os.path.join(data_dir, "MuSIC")
+    if not os.path.exists(music_dir):
+        project_name[0] = "2024-MUSIC"
+    daq_dir = os.path.join(data_dir, *project_name, "Acoustic Monitoring")
+    lmq_dir = os.path.join(data_dir, *project_name, "LMQ Monitoring")
+    del music_dir
+
+    with open(os.path.join(os.path.dirname(daq_dir),'intermediate',f"lpbf_line_wise_data.pkl"), 'rb') as handle:
+        lpbf_data = pickle.load(handle)
+
+    sc_power = StandardScaler().fit(np.unique(lpbf_data.laser_power).astype(float).reshape(-1,1))
+    # sc_direction = StandardScaler().fit(np.unique(lpbf_data.print_vector[1]).astype(float).reshape(-1,1))
+    le_direction = LabelEncoder().fit(np.unique(np.asarray(np.round(lpbf_data.print_vector[1]),dtype=str)))
+    le_speed = LabelEncoder().fit(np.asarray(lpbf_data.scanning_speed,dtype=str))
+    le_region = LabelEncoder().fit(np.asarray(lpbf_data.regime_info,dtype=str))
+
+    laser_power = sc_power.transform(np.asarray(lpbf_data.laser_power).astype(float).reshape(-1,1)).reshape(-1)
+    # print_direction = sc_direction.transform(np.asarray(lpbf_data.print_vector[1]).astype(float).reshape(-1,1)).reshape(-1)
+    print_direction = le_direction.transform(np.asarray(np.round(lpbf_data.print_vector[1]),dtype=str)).astype(int)
+    scanning_speed = le_speed.transform(np.asarray(lpbf_data.scanning_speed).astype(float))
+    regime_info = le_region.transform(np.asarray(lpbf_data.regime_info,dtype=str))
+
+    dataset = LPBFDataset(lpbf_data.cube_position,laser_power,lpbf_data.scanning_speed,regime_info,print_direction,lpbf_data.microphone, lpbf_data.AE, lpbf_data.defect_labels)
+    return dataset,sc_power,le_direction,le_speed,le_region
