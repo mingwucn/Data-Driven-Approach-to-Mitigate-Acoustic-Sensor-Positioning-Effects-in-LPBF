@@ -12,7 +12,7 @@ import os
 from preprocessing import *
 from InterfaceDeclaration import LPBFInterface
 
-def generate_hist_name(model_name, acoustic_type, context_type,output_type,folds):
+def generate_hist_name(model_name, acoustic_type, context_type,output_type):
     context_combinations = []
     for r in range(len(context_type) + 1): 
         context_combinations.extend(itertools.combinations(context_type, r))
@@ -98,3 +98,4 @@ def generate_hist_df(hist_dir,model_name, acoustic_type, context_type,output_typ
     new_df['Acc type']= ['Train'] * len(df) + ['Test'] * len(df)
     new_df.index = range(len(new_df))
     return new_df
+
