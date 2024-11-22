@@ -23,6 +23,10 @@ git clone https://huggingface.co/mingwucn/Data-Driven_Approach_to_Mitigate_Acous
 Input: FT of time series
 Output: Direction (Converted to one hot encoder)
 
+## Postprocessing
+1. `accuracy`: The overall accuracy of trained results
+2. `grad-cam`:
+
 ## Training script
 `python train_dist_1d.py --gpu=0 --save_every=10 --fold_i=0 --folds=10 --model_name=CNN --batch_size=1024 --learning_rate=5e-4 --repeat=1 --epochs=50 --num_workers=5 --input_type='mic+energy' --output_type='direction'`
 
