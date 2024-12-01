@@ -242,7 +242,6 @@ class Trainer:
             criterion = self.criterion_class
             labels = _print_direction.to(self.local_rank_gpu)
 
-
         time_series = (transform_ft()(standardize_tensor(_input)).to(self.local_rank_gpu))
 
         logits = self.model(time_series,meata_list)

@@ -993,3 +993,5 @@ def fill_nan_scipy(arr):
     points = np.vstack((x[~np.isnan(arr)].flatten(), y[~np.isnan(arr)].flatten())).T
     values = arr[~np.isnan(arr)].flatten()
     arr[np.isnan(arr)] = griddata(points, values, (x[np.isnan(arr)], y[np.isnan(arr)]), method='nearest')
+
+

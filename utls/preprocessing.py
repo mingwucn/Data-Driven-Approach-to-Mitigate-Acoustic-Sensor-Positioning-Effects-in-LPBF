@@ -57,9 +57,12 @@ one_column = {                      # setup matplotlib to use latex for output
     "text.latex.preamble": "\n".join([ # plots will use this preamble
         r"\usepackage[utf8]{inputenc}",
         r"\usepackage[T1]{fontenc}",
-        r"\usepackage{siunitx}",
-        r"\usepackage{upgreek}",
+        # r"\usepackage{siunitx}",
+        r"\usepackage{textcomp,mathcomp,upgreek}",
+        r"\usepackage{nicefrac,amsmath,mathtools,relsize}",
+        r"\newcommand{\SI}[2]{${#1} \mskip3mu \mathrm{#2}$}",
         r"\usepackage{txfonts}",
+        r"\usepackage{cmbright}"
         ])
     }
 
@@ -80,9 +83,12 @@ two_column = {                      # setup matplotlib to use latex for output
     "text.latex.preamble": "\n".join([ # plots will use this preamble
         r"\usepackage[utf8]{inputenc}",
         r"\usepackage[T1]{fontenc}",
-        r"\usepackage{siunitx}",
-        r"\usepackage{upgreek}",
+        # r"\usepackage{siunitx}",
+        r"\usepackage{textcomp,mathcomp,upgreek}",
+        r"\usepackage{nicefrac,amsmath,mathtools,relsize}",
+        r"\newcommand{\SI}[2]{${#1} \mskip3mu \mathrm{#2}$}",
         r"\usepackage{txfonts}",
+        r"\usepackage{cmbright}"
         ])
     }
 
