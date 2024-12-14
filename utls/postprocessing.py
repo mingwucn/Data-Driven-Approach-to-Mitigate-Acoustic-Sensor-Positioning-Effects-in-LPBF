@@ -192,7 +192,7 @@ def read_trained_model(snap_dir,model_name, acoustic_type, context_type,output_t
                         snap_list.append(file_path)
     return model,snap_list
 
-def get_confution_matrix(model, snap_dir, _model_name,_inputs,_outputs,class_num=5,folds_num = 10):
+def get_confusion_matrix(model, snap_dir, _model_name,_inputs,_outputs,class_num=5,folds_num = 10):
     import torch
     from sklearn.metrics import confusion_matrix
     _model_name= "CNN"

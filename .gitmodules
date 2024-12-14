@@ -6,3 +6,7 @@
     path = lfs 
     url = https://huggingface.co/mingwucn/Data-Driven_Approach_to_Mitigate_Acoustic_Sensor_Positioning_Effects_in_LPBF
     ignore = all
+[submodule "utls"]
+    path = utls 
+    url = git@github.com:mingwucn/utls.git
+    ignore = all
