@@ -6,7 +6,8 @@
 	symlinks = false
 	ignorecase = true
 [remote "origin"]
-	url = git@github.com:mingwucn/Paper_Data-Driven-Approach-to-Mitigate-Acoustic-Sensor-Positioning-Effects-in-LPBF.git
+	url = git@github.com:mingwucn/Data-Driven-Approach-to-Mitigate-Acoustic-Sensor-Positioning-Effects-in-LPBF.git
+	url = git@gitcode.com:mingwucn/Data-Driven-Approach-to-Mitigate-Acoustic-Sensor-Positioning-Effects-in-LPBF.git
 	fetch = +refs/heads/*:refs/remotes/origin/*
 [branch "master"]
 	remote = origin
