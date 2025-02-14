@@ -7,7 +7,6 @@
 	ignorecase = true
 [remote "origin"]
 	url = git@github.com:mingwucn/Paper_Data-Driven-Approach-to-Mitigate-Acoustic-Sensor-Positioning-Effects-in-LPBF.git
-	url = git@gitlab.com:mingwucn/paper_data-driven-approach-to-mitigate-acoustic-sensor-positioning-effects-in-lpbf.git
 	fetch = +refs/heads/*:refs/remotes/origin/*
 [branch "master"]
 	remote = origin
