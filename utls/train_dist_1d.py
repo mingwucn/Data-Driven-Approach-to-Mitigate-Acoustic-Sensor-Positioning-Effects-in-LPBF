@@ -19,10 +19,10 @@ from torch.utils.data.dataset import Subset
 from torch.utils.data import Dataset, DataLoader, DistributedSampler
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, StandardScaler,LabelEncoder
 
-sys.path.append("./utls")
-sys.path.append("./models")
-from models.MLUtls import fade_in_out, standardize_tensor, CylinderDataset,LCVDataset, getKFoldCrossValidationIndexes, train_log, transform_ft, dataset_by_cross_validation, labels_by_classes, get_current_fold_and_hist, LPBFDataset
-from models.MLModels import SVMModel, CNN_Base_1D_Model, ResNet15_1D_Model
+sys.path.append("./utils")
+from utils.MLUtils import fade_in_out, standardize_tensor, CylinderDataset,LCVDataset, getKFoldCrossValidationIndexes, train_log, transform_ft, dataset_by_cross_validation, labels_by_classes, get_current_fold_and_hist_line_wised, LPBFDataset
+from utils.InterfaceDeclaration import LPBFPointData,LPBFData
+from utils.MLModels import SVMModel, CNN_Base_1D_Model, ResNet15_1D_Model
 
 def transform_pad(maximum_size,fad_in_out_length=16):
     t = torchvision.transforms.Compose(
@@ -42,7 +42,7 @@ def transform_pad(maximum_size,fad_in_out_length=16):
                 ])
     return t
 
-def get_dataset(roi_time=10, roi_radius=3):
+def get_dataset(roi_radius=5, cube_i=2):
     project_name = ["MuSIC", "MaPS", "MuSIC_EXP1"]
     if os.name == "posix":
         data_dir = subprocess.getoutput("echo $DATADIR")
@@ -53,20 +53,80 @@ def get_dataset(roi_time=10, roi_radius=3):
         project_name[0] = "2024-MUSIC"
     daq_dir = os.path.join(data_dir, *project_name, "Acoustic Monitoring")
     lmq_dir = os.path.join(data_dir, *project_name, "LMQ Monitoring")
+    ct_img_dir = os.path.join(data_dir, *project_name,"CT_Cube3","Aligned_AN2")
+    label_dir = os.path.join("../","lfs","point_wise_labels")
     del music_dir
 
-    with open(os.path.join(os.path.dirname(daq_dir),'intermediate',f"lpbf_line_wise_data.pkl"), 'rb') as handle:
-        lpbf_data = pickle.load(handle)
+    sampling_rate_daq: int = int(1.25 * 1e6)
+    sampling_rate_lmq: int = int(0.1 * 1e6)
+    tdms_daq_list = natsorted(
+        [i for i in os.listdir(daq_dir) if i.split(".")[-1] == "tdms"]
+    )
+    bin_lmq_list = natsorted([i for i in os.listdir(lmq_dir) if i.split(".")[-1] == "bin"])
+    lmq_channel_name = [
+        "Vector ID",
+        "meltpooldiode",
+        "X Coordinate",
+        "Y Coordinate",
+        "Laser power",
+        "Spare",
+        "Laser diode",
+        "Varioscan(focal length)",
+    ]
+    process_regime = [
+        [0,60,     "Base"], # ignored
+        [61, 130,  "GP"], # Gas Pore, Unstable keyhole, very hard to predict
+        [131, 200, "NP"], # No Pore, Nominal Parameter
+        [201, 270, "RLoF"], # Random lack of fusion
+        [271, 340, "LoF"] # lack of Fusion, most easy to predict
+    ]
 
+    laser_power_setting = [
+        [0,60,     "165"], # ignored
+        [61, 130,  "110"], # Gas Pore, Unstable keyhole, very hard to predict
+        [131, 200, "180"], # No Pore, Nominal Parameter
+        [201, 270, "300"], # Random lack of fusion
+        [271, 340, "165"] # lack of Fusion, most easy to predict
+    ]
+
+    scanning_speed_setting = [
+        [0,60,     "900"], # ignored
+        [61, 130,  "900"], # Gas Pore, Unstable keyhole, very hard to predict
+        [131, 200, "900"], # No Pore, Nominal Parameter
+        [201, 270, "900"], # Random lack of fusion
+        [271, 340, "900"] # lack of Fusion, most easy to predict
+]
+
+    label_dir = os.path.join(data_dir, *project_name, "intermediate", f"roi_radius{roi_radius}")
+    with open(os.path.join(label_dir, f"line_wised_cube{cube_i}.pkl"), "rb") as fp:
+        lpbf = pickle.load(fp)
+
+    lpbf_data = LPBFPointData(
+    context_info={
+        "cube_position": [lpbf.cube_i]*len(lpbf.laser_power),
+        "laser_power": lpbf.laser_power,
+        "start_coord": lpbf.start_coord,
+        "end_coord":   lpbf.end_coord,
+        "scanning_speed": lpbf.scanning_speed,
+        "regime_info": lpbf.regime_info,
+    },
+    defect_labels=lpbf.line_labels,
+    in_process_data={
+        "microphone": lpbf.microphone,
+        "AE": lpbf.ae,
+        "photodiode": lpbf.photodiode,
+        }
+    )
+    del lpbf
+    gc.collect()
+    
     sc_power = StandardScaler().fit(np.unique(lpbf_data.laser_power).astype(float).reshape(-1,1))
-    # sc_direction = StandardScaler().fit(np.unique(lpbf_data.print_vector[1]).astype(float).reshape(-1,1))
-    le_direction = LabelEncoder().fit(np.unique(np.asarray(np.round(lpbf_data.print_vector[1]),dtype=str)))
+    sc_direction = StandardScaler().fit(np.unique(np.round(lpbf_data.print_vector[1])).astype(float).reshape(-1,1))
     le_speed = LabelEncoder().fit(np.asarray(lpbf_data.scanning_speed,dtype=str))
     le_region = LabelEncoder().fit(np.asarray(lpbf_data.regime_info,dtype=str))
 
     laser_power = sc_power.transform(np.asarray(lpbf_data.laser_power).astype(float).reshape(-1,1)).reshape(-1)
-    # print_direction = sc_direction.transform(np.asarray(lpbf_data.print_vector[1]).astype(float).reshape(-1,1)).reshape(-1)
-    print_direction = le_direction.transform(np.asarray(np.round(lpbf_data.print_vector[1]),dtype=str)).astype(int)
+    print_direction = sc_direction.transform(np.asarray(np.round(lpbf_data.print_vector[1])).astype(float).reshape(-1,1)).reshape(-1)
     scanning_speed = le_speed.transform(np.asarray(lpbf_data.scanning_speed).astype(float))
     regime_info = le_region.transform(np.asarray(lpbf_data.regime_info,dtype=str))
 
@@ -248,7 +308,10 @@ class Trainer:
         probs = torch.sigmoid(logits)
         predictions = torch.argmax(probs,axis=1).clone().int().detach().cpu()
 
-        loss = criterion(logits,labels)
+        if self.output_type == "defect":
+            loss = criterion(logits.squeeze(), labels.to(logits.dtype))
+        else:
+            loss = criterion(logits,labels)
 
         hit_number = torch.sum(predictions == labels.clone().detach().cpu())
         total_number = labels.numel()
@@ -361,6 +424,7 @@ class Trainer:
 
     def train(self):
         for epoch in range(self.epochs_run, self.max_epochs):
+            self.model.train()
             start_time = time.time()
             self.train_loss = 0.0
             self.train_acc = 0.0
@@ -447,7 +511,7 @@ def main_folds(rank, gpu_ids, model_name, dataset, num_epochs, batch_size, learn
     if output_type == "regime":
         num_classes = 4
     if output_type == "defect":
-        num_classes = 2
+        num_classes = 1
     if output_type == "direction":
         num_classes = 5
     if output_type == "position":
@@ -494,14 +558,14 @@ if __name__ == "__main__":
     parser.add_argument('--folds', default="5", type=int, help="folds number") 
     parser.add_argument('--save_every', type=int, default=1, help=f'Save every 1 steps')
     parser.add_argument('--model_name', type=str, default='CNN', help=f'The model name')
-    parser.add_argument('--roi_time', type=int, default=10, help=f'ROI time, unit(ms)')
-    parser.add_argument('--roi_radius', type=float, default=3, help=f'ROI radius, unit(pixel)')
-    parser.add_argument('--repeat', type=int, default=1, help=f'Repete Times for Cross valildation, default 1, no repeat')
+    # parser.add_argument('--roi_time', type=int, default=10, help=f'ROI time, unit(ms)')
+    parser.add_argument('--roi_radius', type=int, default=5, help=f'ROI radius, unit(pixel)')
+    parser.add_argument('--repeat', type=int, default=1, help=f'Repeat Times for Cross validation, default 1, no repeat')
     parser.add_argument('--test', type=bool, default=False, help=f'Go through the dataset without training, default False')
     parser.add_argument('--num_workers', type=int, default=4, help=f'Worker number in the dataloader, default:4')
     parser.add_argument('--input_type',  type=str, default='mic+energy', help=f'Input type')
     parser.add_argument('--output_type', type=str, default='regime', help=f'Output type')
-    parser.add_argument('--time_series_length', type=int, default='5888', help=f'The maximum length of time series inputs')
+    # parser.add_argument('--time_series_length', type=int, default='5888', help=f'The maximum length of time series inputs')
     
     args = parser.parse_args()
 
@@ -512,9 +576,9 @@ if __name__ == "__main__":
     print(f"Save every {args.save_every} epoch(s)")
     print(f"Input type: {args.input_type}")
     print(f"Output type {args.output_type}")
-    print(f"ROI time: {args.roi_time}")
+    # print(f"ROI time: {args.roi_time}")
     print(f"ROI radius {args.roi_radius}")
-    print(f"Maximum time series length {args.time_series_length}")
+    # print(f"Maximum time series length {args.time_series_length}")
     print(f"============= Settings =============\n")
     if int(args.fold_i[0]) == 0:
         folds_i = range(int(args.folds*args.repeat))
@@ -523,8 +587,8 @@ if __name__ == "__main__":
         folds_i = np.array(args.fold_i)-1
         print(f"Cross validation on fold [{args.fold_i}]/{args.folds}*{args.repeat}")
 
-    ## Restrore form the snapshot
-    current_fold,trained_epochs = get_current_fold_and_hist(args.model_name,args.input_type,args.output_type,args.folds,args.roi_time,args.roi_radius,args.epochs)
+    ## Restore form the snapshot
+    current_fold,trained_epochs = get_current_fold_and_hist_line_wised(args.model_name,args.input_type,args.output_type,args.folds,args.roi_radius,args.epochs)
     
     if (trained_epochs == args.epochs) & (current_fold+1==int(args.folds))==True:
         print("Finished current folds\n")
@@ -544,7 +608,7 @@ if __name__ == "__main__":
 
         # err_k_folds = getKFoldCrossValidationIndexes(len(err_labels), args.folds, seed=10086)
         # nor_k_folds = getKFoldCrossValidationIndexes(len(normal_labels), args.folds, seed=10086)
-        dataset = get_dataset()
+        dataset = get_dataset(roi_radius=args.roi_radius)
         len_dataset = len(dataset)
 
         print(f"Len dataset {len_dataset}")
@@ -577,19 +641,24 @@ if __name__ == "__main__":
             # rng.shuffle(test_labels,axis=0)
 
 
-            checkpoint_name = f'{args.model_name}_classification_input_{args.input_type}_output_{args.output_type}_roi_time{args.roi_time}_roi_radius{args.roi_radius}_fold{fold_i}_of_folds{args.folds}'
+            # checkpoint_name = f'{args.model_name}_classification_input_{args.input_type}_output_{args.output_type}_roi_time{args.roi_time}_roi_radius{args.roi_radius}_fold{fold_i}_of_folds{args.folds}'
+
+            # checkpoint_name = f'{args.model_name}_classification_window{args.time_series_length}_stride{args.stride}_fold{fold_i}_of_folds{args.folds}'
+            checkpoint_name = f'Line_wised_{args.model_name}_{args.input_type}_{args.output_type}_roi_radius{args.roi_radius}_fold{fold_i}_of_folds{args.folds}'
 
             # dataset, train_idx, test_idx = dataset_by_cross_validation(args.roi_time,train_labels,test_labels,total_labels=total_labels, ram=True)
             
             # print(f"Total dataset {len(dataset)}: Train {len(train_labels)} | Test {len(test_labels)}")
             train_idx, test_idx = all_k_folds[fold_i]
+            # max_length = dataset.max_length
+            max_length = transform_ft()(torch.ones(1,dataset.max_length)).shape[1]
             if len(args.gpu)>1:
                 mp.spawn(main_folds,
-                    args = (args.gpu, args.model_name, dataset, args.epochs, args.batch_size,args.learning_rate,args.num_workers,  (train_idx, test_idx), checkpoint_name, args.save_every,args.test,args.input_type,args.output_type,args.time_series_length),
+                    args = (args.gpu, args.model_name, dataset, args.epochs, args.batch_size,args.learning_rate,args.num_workers,  (train_idx, test_idx), checkpoint_name, args.save_every,args.test,args.input_type,args.output_type,max_length),
                     nprocs=len(args.gpu),
                     join=True)
             else:
-                main_folds(0, args.gpu, args.model_name, dataset, args.epochs, args.batch_size,args.learning_rate,args.num_workers,  (train_idx, test_idx), checkpoint_name, args.save_every,args.test,args.input_type,args.output_type,args.time_series_length)
+                main_folds(0, args.gpu, args.model_name, dataset, args.epochs, args.batch_size,args.learning_rate,args.num_workers,  (train_idx, test_idx), checkpoint_name, args.save_every,args.test,args.input_type,args.output_type,max_length)
 
             end_time = time.time()
             fold_duration = end_time - start_time 

@@ -6,15 +6,13 @@ import scipy
 import subprocess
 from natsort import natsorted
 import string
-sys.path.append("./../utls")
+sys.path.append("./../utils")
 # sys.path.append("./cpp_utils")
 sys.path.append("./..")
-sys.path.append("./../models")
-from utls.preprocessing import process_trajectory_with_dask_shared_memory,create_shared_memory_array,Sender, MaPS_LPBF_Construction,MaPS_LPBF_Point_Wise_Construction,normalize_array,pulse_signal_slicer_by_interval
-from utls.preprocessing import cm_std
-from models.MLUtls import get_windowed_data
-from utls.InterfaceDeclaration import LPBFPointData
-from train_dist_1d import get_dataset
+from utils.preprocessing import process_trajectory_with_dask_shared_memory,create_shared_memory_array,Sender, MaPS_LPBF_Construction,MaPS_LPBF_Point_Wise_Construction,normalize_array,pulse_signal_slicer_by_interval
+from utils.preprocessing import cm_std
+from utils.MLUtils import get_windowed_data
+from utils.InterfaceDeclaration import LPBFPointData
 import matplotlib.pyplot as plt
 import seaborn as sns
 from PIL import Image
@@ -239,7 +237,13 @@ def geometrical_embedded_offset(daq_mapped_info,x_center,y_center):
                 first_line_direction = 0 if _sorted_p[0] == _s0 else 1
         _s0s.append(_sorted_p[0])
         _s1s.append(_sorted_p[1])
-        _ratio = _ae_length/_dist/sampling_rate_daq*1e3
+        if _dist == 0:
+            if i == 0:
+                _ratio = 1
+            else:
+                _ratio = ae_len[i-1] / calculate_distance(_s0s[i-1], _s1s[i-1]) / sampling_rate_daq * 1e3
+        else:
+            _ratio = _ae_length / _dist / sampling_rate_daq * 1e3
         point_pairs.append([_sorted_p[0],_sorted_p[1]])
 
     # This block will center the longest line, and calculate the relative offset for each line. Hence, the geometrical information can be embedded via these offsets.  
@@ -296,7 +300,7 @@ def fourier_transform(signals, sampling_rate):
 
     return fourier_results
 
-def fourier_transform1d_interp(signals, sampling_rate, target_freq=None, target_length=None,verbose=False):
+def fourier_transform1d_interp(signals, sampling_rate, target_length=None):
     from scipy.interpolate import interp1d
     """
     Computes the real part of the Fourier transform for a list of 1D signals,
@@ -306,22 +310,19 @@ def fourier_transform1d_interp(signals, sampling_rate, target_freq=None, target_
     - signals: List of 1D numpy arrays, each representing a signal.
     - sampling_rate: Sampling rate of the signals (in Hz).
     - target_length: Optional integer specifying the length to which all Fourier
-        transforms should be interpolated. If not provided, the maximum length
-        of the Fourier transforms will be used.
+      transforms should be interpolated. If not provided, the maximum length
+      of the Fourier transforms will be used.
 
     Returns:
     - interpolated_fts: List of interpolated real Fourier transform results.
     - common_freqs: Common frequency grid for all signals after interpolation.
     """
-
-    # Compute the Fourier Transform for each signal
-    if verbose==True:
-        signals = tqdm(signals)
-
     real_fts = []
     freq_grids = []
-    for i, signal in enumerate(signals):
-        if len(signal) > 1:
+
+    # Compute the Fourier Transform for each signal
+    for signal in signals:
+        if len(signal) != 0:
             # Compute FFT and keep only the real part
             fft_result = np.fft.fft(signal)
             real_fft = np.real(fft_result)
@@ -333,27 +334,19 @@ def fourier_transform1d_interp(signals, sampling_rate, target_freq=None, target_
             
             real_fft = np.real(fft_result)
             # Compute the corresponding frequency grid
-            n = len(fft_result)
+            n = len(signal)
             freqs = np.fft.fftfreq(n, d=1/sampling_rate)
         
-        # if len(real_fft)==0:
-            # print(i)
         # Store the real part of the FFT and the frequency grid
         real_fts.append(real_fft[:n//2])  # Take only the positive frequencies
         freq_grids.append(freqs[:n//2])
+    
     # Determine the target length for interpolation
     if target_length is None:
         target_length = max(len(fft) for fft in real_fts)
     
-    if verbose==True:
-        print(f"Target length is {target_length}")
-        print(f"Min freq {min(freq_grid.max() for freq_grid in freq_grids)}")
-    
     # Create a common frequency grid for interpolation
-    if target_freq==None:
-        common_freqs = np.linspace(0, min(freq_grid.max() for freq_grid in freq_grids), target_length)
-    else:
-        common_freqs = np.linspace(0, target_freq, target_length)
+    common_freqs = np.linspace(0, min(freq_grid.max() for freq_grid in freq_grids), target_length)
 
     # Interpolate each Fourier transform onto the common frequency grid
     interpolated_fts = []
@@ -364,7 +357,6 @@ def fourier_transform1d_interp(signals, sampling_rate, target_freq=None, target_
         interpolated_fts.append(interpolated_fft)
 
     return np.asarray(interpolated_fts), common_freqs
-
 
 def calculate_distance(p1, p2):
     """Calculates the Euclidean distance between two points."""
@@ -464,7 +456,9 @@ def place_signals_on_grid(signals,t_data, max_length, resolution,fill=0):
     # Step 2: Interpolate each signal onto the common time grid
     interpolated_signals = []
     for t, signal in zip(t_data, signals):
-        # signal = abs(signal)
+        if len(t) == 0 or len(signal) == 0:
+            interpolated_signals.append(np.full_like(time_grid, fill))
+            continue
         # Define interpolation function with extrapolation for values outside the range
         interp_func = interp1d(t, signal, kind='linear', bounds_error=False, fill_value=fill)
         # Interpolate signal onto the common time grid
@@ -472,10 +466,13 @@ def place_signals_on_grid(signals,t_data, max_length, resolution,fill=0):
         interpolated_signals.append(interpolated_signal)
 
     # Step 3: Stack interpolated signals into a 2D array
-    signal_matrix = np.vstack(interpolated_signals)
+    if not interpolated_signals:
+        signal_matrix = np.zeros((1, len(time_grid)))
+    else:
+        signal_matrix = np.vstack(interpolated_signals)
     return signal_matrix
 
-def from_xy_get_signal_matrix(center_x, center_y,xy_map,daq_map_lengths,lmq_map_lengths, ae_collection,sampling_rate_daq,max_length=1.5, resolution=0.002,fill=0):
+def from_xy_get_signal_matrix(center_x, center_y,xy_map,daq_map_lengths,lmq_map_lengths, ae_collection,sampling_rate_daq,max_length=1.5, resolution=0.002,fill=0,roi_radius=100):
     """
     a over all function combine: 
         - signal_within_radius
@@ -483,7 +480,7 @@ def from_xy_get_signal_matrix(center_x, center_y,xy_map,daq_map_lengths,lmq_map_
         - place_signals_on_grid
     to get the signal_matrix
     """
-    daq_mapped_info = signal_within_radius(xy_map,center_x,center_y,100,daq_map_lengths,lmq_map_lengths)
+    daq_mapped_info = signal_within_radius(xy_map,center_x,center_y,roi_radius,daq_map_lengths,lmq_map_lengths)
     if len(daq_mapped_info)==0:
         return np.zeros([5,int(max_length/resolution)])
     first_line_direction, start_offset = geometrical_embedded_offset(daq_mapped_info,center_x,center_y)

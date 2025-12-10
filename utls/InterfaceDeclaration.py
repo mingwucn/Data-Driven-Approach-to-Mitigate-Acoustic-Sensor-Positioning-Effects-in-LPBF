@@ -116,7 +116,7 @@ class LPBFInterface(ABC):
         return self.defect_labels["point_labels"]
 
     @property
-    def line_labels(self) -> list[int]:
+    def line_labels(self) -> list[np.asarray]:
         return self.defect_labels["line_labels"]
 
 class LPBFData(LPBFInterface):
