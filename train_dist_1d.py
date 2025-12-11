@@ -19,7 +19,7 @@ from torch.utils.data.dataset import Subset
 from torch.utils.data import Dataset, DataLoader, DistributedSampler
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, StandardScaler,LabelEncoder
 
-sys.path.append("./utls")
+sys.path.append("./utils")
 sys.path.append("./models")
 from models.MLUtls import fade_in_out, standardize_tensor, CylinderDataset,LCVDataset, getKFoldCrossValidationIndexes, train_log, transform_ft, dataset_by_cross_validation, labels_by_classes, get_current_fold_and_hist, LPBFDataset
 from models.MLModels import SVMModel, CNN_Base_1D_Model, ResNet15_1D_Model

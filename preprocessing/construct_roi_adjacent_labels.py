@@ -6,14 +6,14 @@ import scipy
 import subprocess
 from natsort import natsorted
 import string
-sys.path.append("./../utls")
+sys.path.append("./../utils")
 # sys.path.append("./cpp_utils")
 sys.path.append("./..")
 sys.path.append("./../models")
-from utls.preprocessing import process_trajectory_with_dask_shared_memory,create_shared_memory_array,Sender, MaPS_LPBF_Construction,MaPS_LPBF_Point_Wise_Construction,normalize_array,pulse_signal_slicer_by_interval
-from utls.preprocessing import cm_std
+from utils.preprocessing import process_trajectory_with_dask_shared_memory,create_shared_memory_array,Sender, MaPS_LPBF_Construction,MaPS_LPBF_Point_Wise_Construction,normalize_array,pulse_signal_slicer_by_interval
+from utils.preprocessing import cm_std
 from models.MLUtls import get_windowed_data
-from utls.InterfaceDeclaration import LPBFPointData
+from utils.InterfaceDeclaration import LPBFPointData
 from train_dist_1d import get_dataset
 import matplotlib.pyplot as plt
 import seaborn as sns

@@ -1,5 +1,5 @@
 import sys
-sys.path.append("./utls")
+sys.path.append("./utils")
 sys.path.append("./preprocessing")
 from preprocessing import *
 import os
@@ -7,7 +7,7 @@ import string
 import subprocess
 from natsort import natsorted
 from InterfaceDeclaration import LPBFData
-from utls.preprocessing import MaPS_LPBF_Construction
+from utils.preprocessing import MaPS_LPBF_Construction
 from construct_roi_adjacent_labels import fourier_transform1d_interp
 import pickle
 import numpy as np

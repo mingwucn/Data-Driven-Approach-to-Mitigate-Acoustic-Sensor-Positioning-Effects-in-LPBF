@@ -3,11 +3,11 @@ import numpy as np
 import scipy
 import subprocess
 from natsort import natsorted
-sys.path.append("./utls")
+sys.path.append("./utils")
 import os
 import string
 from InterfaceDeclaration import LPBFData
-from utls.preprocessing import MaPS_LPBF_Construction
+from utils.preprocessing import MaPS_LPBF_Construction
 import pickle
 
 alphabet = list(string.ascii_lowercase)
